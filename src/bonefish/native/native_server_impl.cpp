@@ -197,7 +197,7 @@ void native_server_impl::on_message(
         std::unique_ptr<wamp_transport> transport(new native_transport(connection));
         m_message_processor.process_message(message, std::move(transport), connection.get());
     } catch (const std::exception& e) {
-        BONEFISH_TRACE("unhandled exception: %1%", e.what());
+        BONEFISH_ERROR("unhandled exception: %1%", e.what());
     }
 }
 

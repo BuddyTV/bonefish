@@ -256,7 +256,7 @@ inline void rawsocket_connection::receive_message_header_handler(
     // a message that reports a zero length we fail that connection gracefully.
     static const uint32_t MAX_MESSAGE_LENGTH = 16*1024*1024; // 16MB
     if (message_length == 0 || message_length > MAX_MESSAGE_LENGTH) {
-        BONEFISH_TRACE("invalid message length: %1%", message_length);
+        BONEFISH_ERROR("invalid message length: %1%", message_length);
         const auto& fail_handler = get_fail_handler();
         fail_handler(shared_from_this(), "invalid message length");
         return;
@@ -299,15 +299,15 @@ inline void rawsocket_connection::handle_system_error(const boost::system::error
     //       codes are that can occur for the async receive handlers. So it will be an
     //       ongoing exercise in trying to figure this out.
     if (error_code == boost::asio::error::eof) {
-        BONEFISH_TRACE("connection closed: %1%", error_code);
+        BONEFISH_ERROR("connection closed: %1%", error_code);
         const auto& close_handler = get_close_handler();
         close_handler(shared_from_this());
     } else if (error_code != boost::asio::error::operation_aborted) {
-        BONEFISH_TRACE("connection failed: %1%", error_code);
+        BONEFISH_ERROR("connection failed: %1%", error_code);
         const auto& fail_handler = get_fail_handler();
         fail_handler(shared_from_this(), error_code.message().c_str());
     } else {
-        BONEFISH_TRACE("unhandled system error: %1%", error_code);
+        BONEFISH_ERROR("unhandled system error: %1%", error_code);
         assert(0);
     }
 }

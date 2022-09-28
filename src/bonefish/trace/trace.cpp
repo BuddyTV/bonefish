@@ -20,6 +20,8 @@ namespace bonefish {
 namespace trace {
 
 bool _enabled = false;
+std::function<void(const std::string&)> trace = [](const std::string& str){ std::clog << str << std::endl; };
+std::function<void(const std::string&)> error = [](const std::string& str){ std::cerr << str << std::endl; };
 
 } // namespace trace
 } // namespace bonefish

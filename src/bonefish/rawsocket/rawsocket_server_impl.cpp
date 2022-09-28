@@ -73,7 +73,7 @@ void rawsocket_server_impl::attach_listener(const std::shared_ptr<rawsocket_list
             // try to re-establish a listening socket otherwise this listener
             // could be rendered unusable.
             assert(listener.is_listening());
-            BONEFISH_TRACE("rawsocket listener error: %1%", error_code);
+            BONEFISH_ERROR("rawsocket listener error: %1%", error_code);
             listener.stop_listening();
             listener.start_listening();
         }
@@ -185,7 +185,7 @@ void rawsocket_server_impl::on_handshake(
     // the choice of this magic number.
     uint32_t magic = (capabilities & 0xFF000000) >> 24;
     if (magic != 0x7F) {
-        BONEFISH_TRACE("invalid capabilities: %1%", capabilities);
+        BONEFISH_ERROR("invalid capabilities: %1%", capabilities);
         return teardown_connection(connection);
     }
 
@@ -201,9 +201,9 @@ void rawsocket_server_impl::on_handshake(
     // with the connection for message processing.
     uint32_t serializer = (capabilities & 0x000F0000) >> 16;
     if (serializer != 0x2) {
-        BONEFISH_TRACE("invalid serializer specified: %1%", serializer);
+        BONEFISH_ERROR("invalid serializer specified: %1%", serializer);
         if (!connection->send_handshake(htonl(0x7F100000))) {
-            BONEFISH_TRACE("failed to send handshake response to component: network failure");
+            BONEFISH_ERROR("failed to send handshake response to component: network failure");
             teardown_connection(connection);
         }
         return;
@@ -214,7 +214,7 @@ void rawsocket_server_impl::on_handshake(
     uint32_t reserved = capabilities & 0x0000FFFF;
     if (reserved != 0) {
         if (!connection->send_handshake(htonl(0x7F300000))) {
-            BONEFISH_TRACE("failed to send handshake response to component: network failure");
+            BONEFISH_ERROR("failed to send handshake response to component: network failure");
             teardown_connection(connection);
         }
         return;
@@ -230,7 +230,7 @@ void rawsocket_server_impl::on_handshake(
         // receiving state to a message receiving state.
         connection->async_receive();
     } else {
-        BONEFISH_TRACE("failed to send handshake response to component: network failure");
+        BONEFISH_ERROR("failed to send handshake response to component: network failure");
         teardown_connection(connection);
     }
 }
@@ -250,7 +250,7 @@ void rawsocket_server_impl::on_message(
             m_message_processor.process_message(message, std::move(transport), connection.get());
         }
     } catch (const std::exception& e) {
-        BONEFISH_TRACE("unhandled exception: %1%", e.what());
+        BONEFISH_ERROR("unhandled exception: %1%", e.what());
     }
 }
 

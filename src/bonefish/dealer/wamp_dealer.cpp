@@ -218,7 +218,7 @@ void wamp_dealer::process_call_message(const wamp_session_id& session_id,
 
     BONEFISH_TRACE("%1%, %2%", *session_itr->second % *invocation_message);
     if (!session->get_transport()->send_message(std::move(*invocation_message))) {
-        BONEFISH_TRACE("sending invocation message to callee failed: network failure");
+        BONEFISH_ERROR("sending invocation message to callee failed: network failure");
 
         send_error(session_itr->second->get_transport(), call_message->get_type(),
                 call_message->get_request_id(), "wamp.error.network_failure");
@@ -259,7 +259,7 @@ void wamp_dealer::process_error_message(const wamp_session_id& session_id,
         // This is a mormal condition. It means that the caller has ended its
         // session after issuing a call. There is nothing to report to the
         // callee in this case so we just silently drop the message.
-        BONEFISH_TRACE("unable to find invocation ... dropping error message");
+        BONEFISH_ERROR("unable to find invocation ... dropping error message");
         return;
     }
 
@@ -281,7 +281,7 @@ void wamp_dealer::process_error_message(const wamp_session_id& session_id,
         // message was initiated by the callee and sending the callee an error
         // message in response to an error message would not make any sense.
         // Besides, the callers session has ended.
-        BONEFISH_TRACE("failed to send error message to caller: network failure");
+        BONEFISH_ERROR("failed to send error message to caller: network failure");
     }
 
     // The failure to send a message in the event of a network failure
@@ -344,7 +344,7 @@ void wamp_dealer::process_register_message(const wamp_session_id& session_id,
     // do here is trace the fact that this event occured.
     BONEFISH_TRACE("%1%, %2%", *session_itr->second % *registered_message);
     if (!session_itr->second->get_transport()->send_message(std::move(*registered_message))) {
-        BONEFISH_TRACE("failed to send registered message to caller: network failure");
+        BONEFISH_ERROR("failed to send registered message to caller: network failure");
     }
 }
 
@@ -368,7 +368,7 @@ void wamp_dealer::process_unregister_message(const wamp_session_id& session_id,
     auto& registrations = session_registrations_itr->second;
     auto registrations_itr = registrations.find(unregister_message->get_registration_id());
     if (registrations_itr == registrations.end()) {
-        BONEFISH_TRACE("error: dealer session registration id does not exist");
+        BONEFISH_ERROR("error: dealer session registration id does not exist");
         send_error(session_itr->second->get_transport(), unregister_message->get_type(),
                 unregister_message->get_request_id(), "wamp.error.no_such_registration");
         return;
@@ -377,7 +377,7 @@ void wamp_dealer::process_unregister_message(const wamp_session_id& session_id,
     auto registered_procedures_itr =
             m_registered_procedures.find(*registrations_itr);
     if (registered_procedures_itr == m_registered_procedures.end()) {
-        BONEFISH_TRACE("error: dealer registered procedures out of sync");
+        BONEFISH_ERROR("error: dealer registered procedures out of sync");
         send_error(session_itr->second->get_transport(), unregister_message->get_type(),
                 unregister_message->get_request_id(), "wamp.error.no_such_registration");
         return;
@@ -386,7 +386,7 @@ void wamp_dealer::process_unregister_message(const wamp_session_id& session_id,
     auto procedure_registrations_itr =
             m_procedure_registrations.find(registered_procedures_itr->second);
     if (procedure_registrations_itr == m_procedure_registrations.end()) {
-        BONEFISH_TRACE("error: dealer procedure registrations out of sync");
+        BONEFISH_ERROR("error: dealer procedure registrations out of sync");
         send_error(session_itr->second->get_transport(), unregister_message->get_type(),
                 unregister_message->get_request_id(), "wamp.error.no_such_registration");
         return;
@@ -406,7 +406,7 @@ void wamp_dealer::process_unregister_message(const wamp_session_id& session_id,
     // do here is trace the fact that this event occured.
     BONEFISH_TRACE("%1%, %2%", *session_itr->second % *unregistered_message);
     if (!session_itr->second->get_transport()->send_message(std::move(*unregistered_message))) {
-        BONEFISH_TRACE("failed to send unregistered message to caller: network failure");
+        BONEFISH_ERROR("failed to send unregistered message to caller: network failure");
     }
 }
 
@@ -425,7 +425,7 @@ void wamp_dealer::process_yield_message(const wamp_session_id& session_id,
     const auto request_id = yield_message->get_request_id();
     auto pending_invocations_itr = m_pending_invocations.find(request_id);
     if (pending_invocations_itr == m_pending_invocations.end()) {
-        BONEFISH_TRACE("unable to find invocation ... timed out or session closed");
+        BONEFISH_ERROR("unable to find invocation ... timed out or session closed");
         return;
     }
 
@@ -464,7 +464,7 @@ void wamp_dealer::process_yield_message(const wamp_session_id& session_id,
     // we do here is trace the fact that this event occured.
     BONEFISH_TRACE("%1%, %2%", *session_itr->second % *result_message);
     if (!session->get_transport()->send_message(std::move(*result_message))) {
-        BONEFISH_TRACE("failed to send result message to caller: network failure");
+        BONEFISH_ERROR("failed to send result message to caller: network failure");
     }
 
     // If the call has more results in progress then do not cleanup any of the
@@ -493,9 +493,9 @@ void wamp_dealer::send_error(const std::unique_ptr<wamp_transport>& transport,
     error_message->set_request_id(request_id);
     error_message->set_error(error);
 
-    BONEFISH_TRACE("%1%", *error_message);
+    BONEFISH_ERROR("%1%", *error_message);
     if (!transport->send_message(std::move(*error_message))) {
-        BONEFISH_TRACE("failed to send error message");
+        BONEFISH_ERROR("failed to send error message");
     }
 }
 
@@ -508,11 +508,11 @@ void wamp_dealer::invocation_timeout_handler(const wamp_request_id& request_id,
 
     auto pending_invocations_itr = m_pending_invocations.find(request_id);
     if (pending_invocations_itr == m_pending_invocations.end()) {
-        BONEFISH_TRACE("error: unable to find pending invocation");
+        BONEFISH_ERROR("error: unable to find pending invocation");
         return;
     }
 
-    BONEFISH_TRACE("timing out a pending invocation");
+    BONEFISH_ERROR("timing out a pending invocation");
     const auto& call_request_id = pending_invocations_itr->second->get_request_id();
     std::shared_ptr<wamp_session> session = pending_invocations_itr->second->get_session();
 

@@ -22,12 +22,15 @@
 #include <boost/preprocessor/control/iif.hpp>
 #include <boost/preprocessor/variadic/size.hpp>
 #include <iostream>
+#include <functional>
 #include <string.h>
 
 namespace bonefish {
 namespace trace {
 
 extern bool _enabled;
+extern std::function<void(const std::string&)> trace;
+extern std::function<void(const std::string&)> error;
 
 inline bool is_enabled()
 {
@@ -37,6 +40,18 @@ inline bool is_enabled()
 inline void set_enabled(bool is_enabled)
 {
     _enabled = is_enabled;
+}
+
+template<typename Callback>
+inline void set_trace_callback(Callback callback)
+{
+    trace = callback;
+}
+
+template<typename Callback>
+inline void set_error_callback(Callback callback)
+{
+    error = callback;
 }
 
 inline const char* base_file_name(const char* file_path)
@@ -54,14 +69,38 @@ inline const char* base_file_name(const char* file_path)
 
 #define BONEFISH_TRACE_NOARGS(fmt) \
     if (bonefish::trace::is_enabled()) { \
-        std::cerr << "[" << bonefish::trace::base_file_name(__FILE__) << ":" << __LINE__ << "][" << __FUNCTION__ << "] " \
-                << boost::format(fmt) << std::endl; \
+        std::ostringstream oss; \
+        oss << "[" << bonefish::trace::base_file_name(__FILE__) << ":" << __LINE__ << "][" << __FUNCTION__ << "] " \
+                << boost::format(fmt); \
+        bonefish::trace::trace(oss.str()); \
     }
 
 #define BONEFISH_TRACE_ARGS(fmt, ...) \
     if (bonefish::trace::is_enabled()) { \
-        std::cerr << "[" << bonefish::trace::base_file_name(__FILE__) << ":" << __LINE__ << "][" << __FUNCTION__ << "] " \
-                << (boost::format(fmt) % __VA_ARGS__) << std::endl; \
+        std::ostringstream oss; \
+        oss << "[" << bonefish::trace::base_file_name(__FILE__) << ":" << __LINE__ << "][" << __FUNCTION__ << "] " \
+                << (boost::format(fmt) % __VA_ARGS__); \
+        bonefish::trace::trace(oss.str()); \
+    }
+
+// Macro for facilitating error logging.
+#define BONEFISH_ERROR(...) \
+    BOOST_PP_IIF(BOOST_PP_GREATER(BOOST_PP_VARIADIC_SIZE(__VA_ARGS__), 1), BONEFISH_ERROR_ARGS(__VA_ARGS__), BONEFISH_ERROR_NOARGS(BOOST_PP_VARIADIC_ELEM(0, __VA_ARGS__)))
+
+#define BONEFISH_ERROR_NOARGS(fmt) \
+    if (bonefish::trace::is_enabled()) { \
+        std::ostringstream oss; \
+        oss << "[" << bonefish::trace::base_file_name(__FILE__) << ":" << __LINE__ << "][" << __FUNCTION__ << "] " \
+                << boost::format(fmt); \
+        bonefish::trace::error(oss.str()); \
+    }
+
+#define BONEFISH_ERROR_ARGS(fmt, ...) \
+    if (bonefish::trace::is_enabled()) { \
+        std::ostringstream oss; \
+        oss << "[" << bonefish::trace::base_file_name(__FILE__) << ":" << __LINE__ << "][" << __FUNCTION__ << "] " \
+                << (boost::format(fmt) % __VA_ARGS__); \
+        bonefish::trace::error(oss.str()); \
     }
 
 #endif // BONEFISH_WAMP_TRACE_HPP

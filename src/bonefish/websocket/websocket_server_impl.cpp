@@ -179,7 +179,7 @@ bool websocket_server_impl::on_validate(websocketpp::connection_hdl handle)
         }
     }
 
-    BONEFISH_TRACE("no supported subprotocol found ... rejecting connection");
+    BONEFISH_ERROR("no supported subprotocol found ... rejecting connection");
     return false;
 }
 
@@ -206,7 +206,7 @@ void websocket_server_impl::on_message(websocketpp::connection_hdl handle,
             m_message_processor.process_message(message, std::move(transport), connection.get());
         }
     } catch (const std::exception& e) {
-        BONEFISH_TRACE("unhandled exception: %1%", e.what());
+        BONEFISH_ERROR("unhandled exception: %1%", e.what());
     }
 }
 

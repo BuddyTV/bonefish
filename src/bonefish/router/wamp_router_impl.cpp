@@ -123,7 +123,7 @@ bool wamp_router_impl::attach_session(const std::shared_ptr<wamp_session>& sessi
         return true;
     }
 
-    BONEFISH_TRACE("failed to attach session: %1%", *session);
+    BONEFISH_ERROR("failed to attach session: %1%", *session);
 
     return false;
 }
@@ -165,7 +165,7 @@ void wamp_router_impl::process_hello_message(const wamp_session_id& session_id,
     if (session->get_state() != wamp_session_state::NONE) {
         std::unique_ptr<wamp_abort_message> abort_message(new wamp_abort_message);
         abort_message->set_reason("wamp.error.session_already_open");
-        BONEFISH_TRACE("%1%, %2%", *session % *abort_message);
+        BONEFISH_ERROR("%1%, %2%", *session % *abort_message);
         session->get_transport()->send_message(std::move(*abort_message));
         return;
     }
@@ -174,7 +174,7 @@ void wamp_router_impl::process_hello_message(const wamp_session_id& session_id,
     if (roles.empty()) {
         std::unique_ptr<wamp_abort_message> abort_message(new wamp_abort_message);
         abort_message->set_reason("wamp.error.invalid_roles");
-        BONEFISH_TRACE("%1%, %2%", *session % *abort_message);
+        BONEFISH_ERROR("%1%, %2%", *session % *abort_message);
         session->get_transport()->send_message(std::move(*abort_message));
         return;
     }
@@ -191,7 +191,7 @@ void wamp_router_impl::process_hello_message(const wamp_session_id& session_id,
     // we do here is trace the fact that this event occured.
     BONEFISH_TRACE("%1%, %2%", *session % *welcome_message);
     if (!session->get_transport()->send_message(std::move(*welcome_message))) {
-        BONEFISH_TRACE("failed to send the welcome message: network failure");
+        BONEFISH_ERROR("failed to send the welcome message: network failure");
     }
 }
 
@@ -211,7 +211,7 @@ void wamp_router_impl::process_goodbye_message(const wamp_session_id& session_id
 
         BONEFISH_TRACE("%1%, %2%", *session % *goodbye_message);
         if (!session->get_transport()->send_message(std::move(*message))) {
-            BONEFISH_TRACE("failed to send goodbye message to component: network failure");
+            BONEFISH_ERROR("failed to send goodbye message to component: network failure");
         }
     } else if (session->get_state() == wamp_session_state::CLOSING) {
         session->set_state(wamp_session_state::CLOSED);

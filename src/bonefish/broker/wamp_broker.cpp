@@ -70,7 +70,7 @@ void wamp_broker::detach_session(const wamp_session_id& session_id)
         for (const auto& subscription_id : session_subscriptions_itr->second) {
             auto subscription_topics_itr = m_subscription_topics.find(subscription_id);
             if (subscription_topics_itr == m_subscription_topics.end()) {
-                BONEFISH_TRACE("error: broker subscription topics are out of sync");
+                BONEFISH_ERROR("error: broker subscription topics are out of sync");
                 continue;
             }
 
@@ -83,7 +83,7 @@ void wamp_broker::detach_session(const wamp_session_id& session_id)
 
             auto topic_subscriptions_itr = m_topic_subscriptions.find(topic);
             if (topic_subscriptions_itr == m_topic_subscriptions.end()) {
-                BONEFISH_TRACE("error: broker topic subscriptions are out of sync");
+                BONEFISH_ERROR("error: broker topic subscriptions are out of sync");
                 continue;
             }
 
@@ -225,7 +225,7 @@ void wamp_broker::process_unsubscribe_message(const wamp_session_id& session_id,
 
     auto subscription_topics_itr = m_subscription_topics.find(subscription_id);
     if (subscription_topics_itr == m_subscription_topics.end()) {
-        BONEFISH_TRACE("error: broker subscription topics are out of sync");
+        BONEFISH_ERROR("error: broker subscription topics are out of sync");
     } else {
         std::string topic = subscription_topics_itr->second->get_topic();
         subscription_topics_itr->second->remove_session(session_itr->second);
@@ -235,7 +235,7 @@ void wamp_broker::process_unsubscribe_message(const wamp_session_id& session_id,
 
         auto topic_subscriptions_itr = m_topic_subscriptions.find(topic);
         if (topic_subscriptions_itr == m_topic_subscriptions.end()) {
-            BONEFISH_TRACE("error: broker topic subscription out of sync");
+            BONEFISH_ERROR("error: broker topic subscription out of sync");
         } else {
             topic_subscriptions_itr->second->remove_subscription(subscription_id);
             if (topic_subscriptions_itr->second->get_subscriptions().size() == 0) {
@@ -261,7 +261,7 @@ void wamp_broker::send_error(const std::unique_ptr<wamp_transport>& transport,
     error_message->set_request_id(request_id);
     error_message->set_error(error);
 
-    BONEFISH_TRACE("%1%", *error_message);
+    BONEFISH_ERROR("%1%", *error_message);
     transport->send_message(std::move(*error_message));
 }
 
