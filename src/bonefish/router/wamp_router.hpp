@@ -60,6 +60,7 @@ public:
     void close_session(const wamp_session_id& session_id, const std::string& reason);
     bool detach_session(const wamp_session_id& session_id);
     void allow_disclose_caller(bool allow);
+    void allow_disclose_publisher(bool allow);
 
     void process_authenticate_message(const wamp_session_id& session_id,
             wamp_authenticate_message* call_message);

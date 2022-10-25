@@ -6,12 +6,14 @@ set(SOURCES
     bonefish/messages/wamp_authenticate_extra.cpp
     bonefish/messages/wamp_call_options.cpp
     bonefish/messages/wamp_challenge_extra.cpp
+    bonefish/messages/wamp_event_details.cpp
     bonefish/messages/wamp_hello_details.cpp
     bonefish/messages/wamp_hello_details_advanced.cpp
     bonefish/messages/wamp_invocation_details.cpp
     bonefish/messages/wamp_message_defaults.cpp
     bonefish/messages/wamp_message_factory.cpp
     bonefish/messages/wamp_message_type.cpp
+    bonefish/messages/wamp_publish_options.cpp
     bonefish/messages/wamp_result_details.cpp
     bonefish/messages/wamp_welcome_details.cpp
     bonefish/messages/wamp_yield_options.cpp
@@ -91,6 +93,7 @@ set(PRIVATE_HEADERS
     bonefish/messages/wamp_challenge_extra.hpp
     bonefish/messages/wamp_challenge_message.hpp
     bonefish/messages/wamp_error_message.hpp
+    bonefish/messages/wamp_event_details.hpp
     bonefish/messages/wamp_event_message.hpp
     bonefish/messages/wamp_goodbye_message.hpp
     bonefish/messages/wamp_hello_details.hpp
@@ -103,6 +106,7 @@ set(PRIVATE_HEADERS
     bonefish/messages/wamp_message_factory.hpp
     bonefish/messages/wamp_message_type.hpp
     bonefish/messages/wamp_publish_message.hpp
+    bonefish/messages/wamp_publish_options.hpp
     bonefish/messages/wamp_published_message.hpp
     bonefish/messages/wamp_registered_message.hpp
     bonefish/messages/wamp_register_message.hpp

@@ -216,6 +216,11 @@ void wamp_router_impl::allow_disclose_caller(bool allow)
     m_dealer.allow_disclose(allow);
 }
 
+void wamp_router_impl::allow_disclose_publisher(bool allow)
+{
+    m_broker.allow_disclose(allow);
+}
+
 void wamp_router_impl::process_hello_message(const wamp_session_id& session_id,
         wamp_hello_message* hello_message)
 {

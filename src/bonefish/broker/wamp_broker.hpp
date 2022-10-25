@@ -47,6 +47,7 @@ public:
 
     void attach_session(const std::shared_ptr<wamp_session>& session);
     void detach_session(const wamp_session_id& id);
+    void allow_disclose(bool allow);
 
     void process_publish_message(const wamp_session_id& session_id,
             wamp_publish_message* publish_message);
@@ -68,6 +69,9 @@ private:
     std::unordered_map<wamp_session_id, std::unordered_set<wamp_subscription_id>> m_session_subscriptions;
     std::unordered_map<std::string, std::unique_ptr<wamp_broker_subscriptions>> m_topic_subscriptions;
     std::unordered_map<wamp_subscription_id, std::unique_ptr<wamp_broker_topic>> m_subscription_topics;
+
+    /// Allow or disallow publisher identification
+    bool m_disclosure_allowed;
 };
 
 } // namespace bonefish

@@ -18,8 +18,10 @@
 #include <bonefish/broker/wamp_broker_subscriptions.hpp>
 #include <bonefish/broker/wamp_broker_topic.hpp>
 #include <bonefish/messages/wamp_error_message.hpp>
+#include <bonefish/messages/wamp_event_details.hpp>
 #include <bonefish/messages/wamp_event_message.hpp>
 #include <bonefish/messages/wamp_publish_message.hpp>
+#include <bonefish/messages/wamp_publish_options.hpp>
 #include <bonefish/messages/wamp_published_message.hpp>
 #include <bonefish/messages/wamp_subscribe_message.hpp>
 #include <bonefish/messages/wamp_subscribed_message.hpp>
@@ -39,6 +41,7 @@ wamp_broker::wamp_broker(const std::string& realm)
     , m_session_subscriptions()
     , m_topic_subscriptions()
     , m_subscription_topics()
+    , m_disclosure_allowed(false)
 {
 }
 
@@ -100,6 +103,11 @@ void wamp_broker::detach_session(const wamp_session_id& session_id)
     m_sessions.erase(session_itr);
 }
 
+void wamp_broker::allow_disclose(bool allow)
+{
+    m_disclosure_allowed = allow;
+}
+
 void wamp_broker::process_publish_message(const wamp_session_id& session_id,
         wamp_publish_message* publish_message)
 {
@@ -111,6 +119,19 @@ void wamp_broker::process_publish_message(const wamp_session_id& session_id,
     BONEFISH_TRACE("%1%, %2%", *session_itr->second % *publish_message);
     const std::string topic = publish_message->get_topic();
     const wamp_publication_id publication_id = m_publication_id_generator.generate();
+
+    wamp_publish_options publish_options;
+    publish_options.unmarshal(publish_message->get_options());
+
+    wamp_event_details event_details;
+    if (publish_options.get_option_or("disclose_me", false)) {
+        if (!m_disclosure_allowed) {
+            send_error(session_itr->second->get_transport(), publish_message->get_type(),
+                    publish_message->get_request_id(), "wamp.error.option_disallowed.disclose_me");
+            return;
+        }
+        event_details.set_detail("publisher", session_id.id());
+    }
 
     // Since a publish message fans out to potentially numerous event messages
     // we cannot need to be a bit smarter with how we deal with passing zone
@@ -132,6 +153,7 @@ void wamp_broker::process_publish_message(const wamp_session_id& session_id,
                 event_message.reset(new wamp_event_message());
                 event_message->set_subscription_id(subscription_id);
                 event_message->set_publication_id(publication_id);
+                event_message->set_details(event_details.marshal(event_message->get_zone()));
                 event_message->set_arguments(
                     msgpack::object(publish_message->get_arguments(), event_message->get_zone()));
                 event_message->set_arguments_kw(
@@ -140,6 +162,7 @@ void wamp_broker::process_publish_message(const wamp_session_id& session_id,
                 event_message.reset(new wamp_event_message(publish_message->release_zone()));
                 event_message->set_subscription_id(subscription_id);
                 event_message->set_publication_id(publication_id);
+                event_message->set_details(event_details.marshal(event_message->get_zone()));
                 event_message->set_arguments(publish_message->get_arguments());
                 event_message->set_arguments_kw(publish_message->get_arguments_kw());
             }
