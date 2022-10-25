@@ -50,6 +50,7 @@ public:
 
     void attach_session(const std::shared_ptr<wamp_session>& session);
     void detach_session(const wamp_session_id& id);
+    void allow_disclose(bool allow);
 
     void process_call_message(const wamp_session_id& session_id,
             wamp_call_message* call_message);
@@ -112,6 +113,9 @@ private:
     /// callee. This allows for the invocations to be cleaned up properly when the
     /// callee disconnects before it is able to send a yield response.
     std::unordered_map<wamp_session_id, std::unordered_set<wamp_request_id>> m_pending_callee_invocations;
+
+    /// Allow or disallow callee identification
+    bool m_disclosure_allowed;
 };
 
 } // namespace bonefish

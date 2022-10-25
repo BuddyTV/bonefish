@@ -50,6 +50,7 @@ wamp_dealer::wamp_dealer(boost::asio::io_service& io_service)
     , m_pending_invocations()
     , m_pending_caller_invocations()
     , m_pending_callee_invocations()
+    , m_disclosure_allowed(false)
 {
 }
 
@@ -155,6 +156,11 @@ void wamp_dealer::detach_session(const wamp_session_id& session_id)
     m_sessions.erase(session_itr);
 }
 
+void wamp_dealer::allow_disclose(bool allow)
+{
+    m_disclosure_allowed = allow;
+}
+
 void wamp_dealer::process_call_message(const wamp_session_id& session_id,
         wamp_call_message* call_message)
 {
@@ -206,6 +212,14 @@ void wamp_dealer::process_call_message(const wamp_session_id& session_id,
     wamp_invocation_details invocation_details;
     if (call_options.get_option_or("receive_progress", false)) {
         invocation_details.set_detail("receive_progress", true);
+    }
+    if (call_options.get_option_or("disclose_me", false)) {
+        if (!m_disclosure_allowed) {
+            send_error(session_itr->second->get_transport(), call_message->get_type(),
+                    call_message->get_request_id(), "wamp.error.option_disallowed.disclose_me");
+            return;
+        }
+        invocation_details.set_detail("caller", session_id.id());
     }
 
     std::unique_ptr<wamp_invocation_message> invocation_message(

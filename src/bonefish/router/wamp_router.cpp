@@ -82,6 +82,11 @@ bool wamp_router::detach_session(const wamp_session_id& session_id)
     return m_impl->detach_session(session_id);
 }
 
+void wamp_router::allow_disclose_caller(bool allow)
+{
+    m_impl->allow_disclose_caller(allow);
+}
+
 void wamp_router::process_hello_message(const wamp_session_id& session_id,
         wamp_hello_message* hello_message)
 {
