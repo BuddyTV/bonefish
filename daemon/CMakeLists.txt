@@ -7,7 +7,8 @@ set_target_properties(bonefish_bin PROPERTIES OUTPUT_NAME bonefish)
 add_dependencies(bonefish_bin bonefish)
 
 if (WIN32)
-    target_link_libraries(bonefish_bin ws2_32)
+    target_link_libraries(bonefish_bin PRIVATE ws2_32)
+    target_compile_definitions(bonefish_bin PRIVATE _WINSOCK_DEPRECATED_NO_WARNINGS)
 endif()
 
 target_link_libraries(bonefish_bin

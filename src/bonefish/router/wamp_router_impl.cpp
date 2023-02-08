@@ -86,7 +86,12 @@ auth_requirement check_if_authentication_required(
     });
 
     if (i != requested.end()) {
-        return {*i != auth_type::anonymous, {.id = hello_details.get_auth_id(), .method = *i}};
+        auth_requirement aux{};
+        aux.required = *i != auth_type::anonymous;
+        aux.info.id = hello_details.get_auth_id();
+        aux.info.method = *i;
+        return aux;
+        //return { *i != auth_type::anonymous, {.id = hello_details.get_auth_id(), .method = *i} };
     } else {
         return {true, {}};  // failure case, challenge required, but couldn't match auth method
     }

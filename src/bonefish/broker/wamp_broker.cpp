@@ -108,7 +108,7 @@ void wamp_broker::detach_session(const wamp_session_id& session_id)
         const std::vector<std::unique_ptr<wamp_publish_message>>* testaments =
             session_itr->second->get_testaments_for_scope(scope);
 
-        if (testaments && not testaments->empty()) {
+        if (testaments && !testaments->empty()) {
             BONEFISH_TRACE("detach session: processing testaments for scope %1%", static_cast<int>(scope));
 
             for (const auto& testament : *testaments) {

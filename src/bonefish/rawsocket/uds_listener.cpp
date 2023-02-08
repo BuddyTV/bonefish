@@ -17,7 +17,9 @@
 #include <bonefish/rawsocket/uds_listener.hpp>
 #include <bonefish/rawsocket/uds_connection.hpp>
 
-#include <unistd.h>
+#if !defined(_WIN32)
+    #include <unistd.h>
+#endif
 
 namespace bonefish {
 
