@@ -6,6 +6,10 @@ set_target_properties(bonefish_bin PROPERTIES OUTPUT_NAME bonefish)
 
 add_dependencies(bonefish_bin bonefish)
 
+if (WIN32)
+    target_link_libraries(bonefish_bin ws2_32)
+endif()
+
 target_link_libraries(bonefish_bin
     bonefish
     ${Boost_LIBRARIES}

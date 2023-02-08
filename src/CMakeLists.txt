@@ -145,6 +145,10 @@ set(PRIVATE_HEADERS
 
 add_library(bonefish STATIC ${SOURCES} ${PUBLIC_HEADERS} ${PRIVATE_HEADERS})
 
+if (WIN32)
+    target_link_libraries(bonefish ws2_32 Mswsock)
+endif()
+
 target_link_libraries(bonefish
     ${Boost_LIBRARIES})
 

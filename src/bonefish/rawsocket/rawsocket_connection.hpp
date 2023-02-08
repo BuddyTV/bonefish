@@ -19,8 +19,11 @@
 
 #include <bonefish/common/wamp_connection_base.hpp>
 #include <bonefish/trace/trace.hpp>
-
+#ifdef __linux__
 #include <arpa/inet.h>
+#elif  _WIN32
+#include <WinSock2.h>
+#endif
 #include <boost/asio/buffer.hpp>
 #include <boost/asio/error.hpp>
 #include <boost/system/error_code.hpp>

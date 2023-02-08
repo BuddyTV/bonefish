@@ -2,6 +2,10 @@ set(SOURCES client.cpp)
 
 add_executable(client ${SOURCES})
 
+if (WIN32)
+    target_link_libraries(client ws2_32)
+endif()
+
 target_link_libraries(client
     ${Boost_LIBRARIES}
     ${CMAKE_DL_LIBS}
