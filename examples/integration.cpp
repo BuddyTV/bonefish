@@ -60,13 +60,16 @@ int main(int argc, char** argv)
 
     std::shared_ptr<bonefish::rawsocket_server> rawsocket_server =
             std::make_shared<bonefish::rawsocket_server>(routers, serializers);
+#if defined(BOOST_ASIO_HAS_LOCAL_SOCKETS)
     std::shared_ptr<bonefish::uds_listener> uds_listener =
             std::make_shared<bonefish::uds_listener>(io_service, "/tmp/bonefish.sock");
+#endif
     std::shared_ptr<bonefish::tcp_listener> tcp_listener =
             std::make_shared<bonefish::tcp_listener>(io_service, boost::asio::ip::address(), 8888);
-
+#if defined(BOOST_ASIO_HAS_LOCAL_SOCKETS)
     rawsocket_server->attach_listener(
             std::static_pointer_cast<bonefish::rawsocket_listener>(uds_listener));
+#endif
     rawsocket_server->attach_listener(
             std::static_pointer_cast<bonefish::rawsocket_listener>(tcp_listener));
     rawsocket_server->start();

@@ -14,13 +14,15 @@
  *  limitations under the License.
  */
 
+#include <boost/asio.hpp>
+#if defined(BOOST_ASIO_HAS_LOCAL_SOCKETS)
 #ifndef BONEFISH_UDS_LISTENER_HPP
 #define BONEFISH_UDS_LISTENER_HPP
 
 #include <bonefish/rawsocket/rawsocket_listener.hpp>
 
-#include <boost/asio/io_service.hpp>
-#include <boost/asio/local/stream_protocol.hpp>
+//#include <boost/asio/io_service.hpp>
+//#include <boost/asio/local/stream_protocol.hpp>
 #include <memory>
 #include <string>
 
@@ -51,4 +53,5 @@ private:
 
 } // namespace bonefish
 
+#endif
 #endif // BONEFISH_UDS_LISTENER_HPP

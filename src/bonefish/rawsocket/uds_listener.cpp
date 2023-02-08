@@ -17,6 +17,7 @@
 #include <bonefish/rawsocket/uds_listener.hpp>
 #include <bonefish/rawsocket/uds_connection.hpp>
 
+#if defined(BOOST_ASIO_HAS_LOCAL_SOCKETS)
 #if !defined(_WIN32)
     #include <unistd.h>
 #endif
@@ -82,3 +83,6 @@ void uds_listener::async_accept()
 }
 
 } // namespace bonefish
+
+
+#endif

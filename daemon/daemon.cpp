@@ -88,11 +88,13 @@ daemon::daemon(const daemon_options& options)
                     m_io_service, boost::asio::ip::address(), options.rawsocket_port());
             m_rawsocket_server->attach_listener(std::static_pointer_cast<rawsocket_listener>(listener));
         }
+#if defined(BOOST_ASIO_HAS_LOCAL_SOCKETS)
         if (!options.rawsocket_path().empty()) {
             auto listener = std::make_shared<uds_listener>(
                     m_io_service, options.rawsocket_path());
             m_rawsocket_server->attach_listener(std::static_pointer_cast<rawsocket_listener>(listener));
         }
+#endif
     }
 }
 
