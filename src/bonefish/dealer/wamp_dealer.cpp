@@ -579,11 +579,17 @@ void wamp_dealer::wamp_session_add_testament(const wamp_session_id& session_id, 
     //                  finalized and destroyed on the Broker). Default MUST be destroyed.
     // wamp.session.add_testament does not return a value.
 
+    if (call_message->get_arguments().is_nil()) {
+        throw std::logic_error("wamp.error.invalid_argument");
+    }
+
     std::tuple<std::string, msgpack::object, msgpack::object> args;
     call_message->get_arguments().convert(args);
 
     std::unordered_map<std::string, msgpack::object> kwargs;
-    call_message->get_arguments_kw().convert(kwargs);
+    if (!call_message->get_arguments_kw().is_nil()) {
+        call_message->get_arguments_kw().convert(kwargs);
+    }
 
     const wamp_request_id request_id = m_request_id_generator.generate();
 
