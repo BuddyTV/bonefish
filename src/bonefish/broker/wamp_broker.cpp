@@ -147,6 +147,10 @@ void wamp_broker::process_publish_message(const wamp_session_id& session_id,
         std::size_t num_subscriptions = subscriptions.size();
         std::size_t current_subscription = 0;
 
+        const std::unordered_map<std::string, std::string> details {
+            {"topic", topic}
+        };
+
         for (const auto& subscription : subscriptions) {
             const auto& subscription_id = subscription.first;
             const auto& session = subscription.second;
@@ -160,12 +164,14 @@ void wamp_broker::process_publish_message(const wamp_session_id& session_id,
                     msgpack::object(publish_message->get_arguments(), event_message->get_zone()));
                 event_message->set_arguments_kw(
                     msgpack::object(publish_message->get_arguments_kw(), event_message->get_zone()));
+                event_message->set_details(msgpack::object(details, event_message->get_zone()));
             } else {
                 event_message.reset(new wamp_event_message(publish_message->release_zone()));
                 event_message->set_subscription_id(subscription_id);
                 event_message->set_publication_id(publication_id);
                 event_message->set_arguments(publish_message->get_arguments());
                 event_message->set_arguments_kw(publish_message->get_arguments_kw());
+                event_message->set_details(msgpack::object(details, event_message->get_zone()));
             }
 
             BONEFISH_TRACE("%1%, %2%", *session % *event_message);
