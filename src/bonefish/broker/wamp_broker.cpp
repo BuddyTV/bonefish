@@ -151,6 +151,10 @@ void wamp_broker::process_publish_message(const wamp_session_id& session_id,
             {"topic", topic}
         };
 
+        // If client disconnects unexpectedly (network error, crash, etc) mark
+        // subscriptions as stale and clean-up after publishing
+        std::vector<wamp_subscription_id> stale_subscriptions;
+
         for (const auto& subscription : subscriptions) {
             const auto& subscription_id = subscription.first;
             const auto& session = subscription.second;
@@ -175,7 +179,20 @@ void wamp_broker::process_publish_message(const wamp_session_id& session_id,
             }
 
             BONEFISH_TRACE("%1%, %2%", *session % *event_message);
-            session->get_transport()->send_message(std::move(*event_message));
+            if (!session->get_transport()->send_message(std::move(*event_message))) {
+                BONEFISH_ERROR("Failed to send message to subscriber %1%", subscription_id);
+                stale_subscriptions.push_back(subscription_id);
+            }
+        }
+
+        // Clean up stale subscriptions
+        for (const auto& stale_subscription_id : stale_subscriptions) {
+            BONEFISH_TRACE("Removing stale subscription %1%", stale_subscription_id);
+            topic_subscriptions_itr->second->remove_subscription(stale_subscription_id);
+        }
+        if (topic_subscriptions_itr->second->get_subscriptions().empty()) {
+            BONEFISH_TRACE("No subscribers left for %1%", topic);
+            m_topic_subscriptions.erase(topic);
         }
     }
 
