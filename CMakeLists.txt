@@ -7,7 +7,8 @@ option(shared "build bonefish as a shared library" OFF)
 option(stdlib "When building with clang, you can choose libc++ (default) or libstdc++" OFF)
 option(examples "build examples" OFF)
 
-set(BOOST_COMPONENTS program_options system thread)
+
+set(BOOST_COMPONENTS system thread)
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
     if (NOT stdlib)
@@ -54,6 +55,7 @@ SET (CMAKE_CXX_FLAGS "-DMSGPACK_DEFAULT_API_VERSION=1 ${CMAKE_CXX_FLAGS}")
 set(CMAKE_MODULE_PATH
     ${CMAKE_MODULE_PATH}
     "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules/")
+
 
 if(shared)
     set(Boost_USE_STATIC_LIBS OFF)
