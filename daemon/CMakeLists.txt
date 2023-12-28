@@ -6,6 +6,8 @@ set_target_properties(bonefish_bin PROPERTIES OUTPUT_NAME bonefish)
 
 add_dependencies(bonefish_bin bonefish)
 
+find_package(Boost REQUIRED COMPONENTS program_options ${BOOST_COMPONENTS} )
+
 target_link_libraries(bonefish_bin
     bonefish
     ${Boost_LIBRARIES}

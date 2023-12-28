@@ -9,7 +9,7 @@ option(examples "build examples" OFF)
 option(daemon "build daemon" OFF)
 option(test "build tests" OFF)
 
-set(BOOST_COMPONENTS program_options system thread)
+set(BOOST_COMPONENTS system thread)
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
     if (NOT stdlib)
