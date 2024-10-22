@@ -1,7 +1,9 @@
 cmake_minimum_required(VERSION 3.8)
 project(bonefish)
 
-set(CMAKE_CXX_STANDARD 17)
+if (NOT DEFINED CMAKE_CXX_STANDARD)
+    set(CMAKE_CXX_STANDARD 17)
+endif()
 
 option(shared "build bonefish as a shared library" OFF)
 option(stdlib "When building with clang, you can choose libc++ (default) or libstdc++" OFF)
@@ -41,7 +43,7 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 endif()
 
 if(NOT MSVC)
-    set(CMAKE_CXX_FLAGS "-Wall -Werror -Wno-unused-variable -std=c++11 ${CMAKE_CXX_FLAGS}")
+    set(CMAKE_CXX_FLAGS "-Wall -Werror -Wno-unused-variable ${CMAKE_CXX_FLAGS}")
 else()
     add_definitions(-D_WEBSOCKETPP_CPP11_CHRONO_)
 endif()

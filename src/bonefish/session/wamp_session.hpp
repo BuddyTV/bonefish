@@ -18,6 +18,7 @@
 #define BONEFISH_SESSION_WAMP_SESSION_HPP
 
 #include <bonefish/identifiers/wamp_session_id.hpp>
+#include <bonefish/messages/wamp_publish_message.hpp>
 #include <bonefish/roles/wamp_role.hpp>
 #include <bonefish/session/wamp_session_state.hpp>
 #include <bonefish/transport/wamp_transport.hpp>
@@ -34,7 +35,6 @@ namespace bonefish {
 
 class wamp_hello_message;
 class wamp_message;
-class wamp_publish_message;
 class wamp_transport;
 
 class wamp_session
