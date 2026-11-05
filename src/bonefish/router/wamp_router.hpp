@@ -17,6 +17,8 @@
 #ifndef BONEFISH_WAMP_ROUTER_HPP
 #define BONEFISH_WAMP_ROUTER_HPP
 
+#include <bonefish/router/wamp_session_limits.hpp>
+
 #include <boost/asio/io_service.hpp>
 #include <memory>
 #include <string>
@@ -54,6 +56,10 @@ public:
         boost::asio::io_service& io_service,
         const std::string& realm,
         std::shared_ptr<wamp_authenticator> authenticator = nullptr);
+    wamp_router(
+        boost::asio::io_service& io_service,
+        const std::string& realm,
+        const wamp_session_limits& limits);
     ~wamp_router();
 
     const std::string& get_realm() const;

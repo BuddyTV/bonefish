@@ -17,6 +17,8 @@
 #ifndef BONEFISH_TRANSPORT_WAMP_TRANSPORT_HPP
 #define BONEFISH_TRANSPORT_WAMP_TRANSPORT_HPP
 
+#include <string>
+
 namespace bonefish {
 
 class wamp_message;
@@ -26,6 +28,10 @@ class wamp_transport
 public:
     virtual ~wamp_transport() = default;
     virtual bool send_message(wamp_message&& message) = 0;
+
+    /// Closes the underlying connection after queued messages are sent. Transports that
+    /// can close their connection should override this; the default does nothing.
+    virtual void close(const std::string& reason) { (void)reason; }
 };
 
 } // namespace bonefish

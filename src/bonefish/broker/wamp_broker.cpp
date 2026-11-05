@@ -57,6 +57,12 @@ void wamp_broker::attach_session(const std::shared_ptr<wamp_session>& session)
     }
 }
 
+void wamp_broker::set_limits(std::size_t max_subscriptions, session_limit_violation_handler on_violation)
+{
+    m_max_subscriptions = max_subscriptions;
+    m_on_limit_violation = std::move(on_violation);
+}
+
 void wamp_broker::detach_session(const wamp_session_id& session_id)
 {
     auto session_itr = m_sessions.find(session_id);
@@ -214,6 +220,20 @@ void wamp_broker::process_subscribe_message(const wamp_session_id& session_id,
     }
 
     BONEFISH_TRACE("%1%, %2%", *session_itr->second % *subscribe_message);
+
+    if (m_max_subscriptions != 0) {
+        auto session_subscriptions_itr = m_session_subscriptions.find(session_id);
+        if (session_subscriptions_itr != m_session_subscriptions.end() &&
+                session_subscriptions_itr->second.size() >= m_max_subscriptions) {
+            send_error(session_itr->second->get_transport(), subscribe_message->get_type(),
+                    subscribe_message->get_request_id(), session_limit_error::too_many_subscriptions);
+            if (m_on_limit_violation) {
+                m_on_limit_violation(session_id);
+            }
+            return;
+        }
+    }
+
     wamp_subscription_id subscription_id = m_subscription_id_generator.generate();
     auto& session = session_itr->second;
     {

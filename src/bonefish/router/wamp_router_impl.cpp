@@ -103,7 +103,8 @@ namespace bonefish {
 wamp_router_impl::wamp_router_impl(
         boost::asio::io_service& io_service,
         const std::string& realm,
-        std::shared_ptr<wamp_authenticator> authenticator)
+        std::shared_ptr<wamp_authenticator> authenticator,
+        const wamp_session_limits& limits)
     : m_realm(realm)
     , m_broker(realm)
     , m_dealer(io_service)
@@ -111,7 +112,12 @@ wamp_router_impl::wamp_router_impl(
     , m_authenticator(std::move(authenticator))
     , m_session_id_generator(wamp_session_id_factory::create(realm))
     , m_sessions()
+    , m_limits(limits)
 {
+    auto on_violation = [this](const wamp_session_id& session_id) { on_limit_violation(session_id); };
+    m_broker.set_limits(m_limits.max_subscriptions, on_violation);
+    m_dealer.set_limits(m_limits.max_registrations, m_limits.max_pending_calls, on_violation);
+
     // Setup the broker role and supported features
     wamp_role broker_role(wamp_role_type::BROKER);
 
@@ -227,8 +233,43 @@ bool wamp_router_impl::detach_session(const wamp_session_id& session_id)
     }
 
     m_sessions.erase(session_itr);
+    m_session_violations.erase(session_id);
 
     return true;
+}
+
+void wamp_router_impl::on_limit_violation(const wamp_session_id& session_id)
+{
+    if (m_limits.max_violations == 0) {
+        return;
+    }
+
+    auto session_itr = m_sessions.find(session_id);
+    if (session_itr == m_sessions.end()) {
+        return;
+    }
+
+    const auto now = std::chrono::steady_clock::now();
+    auto& violations = m_session_violations[session_id];
+    if (violations.count == 0 || now - violations.start > m_limits.violation_window) {
+        violations.start = now;
+        violations.count = 0;
+    }
+    if (++violations.count <= m_limits.max_violations) {
+        return;
+    }
+
+    auto& session = session_itr->second;
+    if (session->get_state() != wamp_session_state::OPEN) {
+        return;
+    }
+
+    BONEFISH_ERROR("closing session after repeated limit violations: %1%", *session);
+    std::unique_ptr<wamp_goodbye_message> goodbye_message(new wamp_goodbye_message);
+    goodbye_message->set_reason(session_limit_error::limit_exceeded);
+    session->set_state(wamp_session_state::CLOSING);
+    session->get_transport()->send_message(std::move(*goodbye_message));
+    session->get_transport()->close(session_limit_error::limit_exceeded);
 }
 
 void wamp_router_impl::process_hello_message(const wamp_session_id& session_id,

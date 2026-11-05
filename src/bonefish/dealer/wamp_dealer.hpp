@@ -23,6 +23,7 @@
 #include <bonefish/identifiers/wamp_request_id.hpp>
 #include <bonefish/identifiers/wamp_session_id.hpp>
 #include <bonefish/messages/wamp_message_type.hpp>
+#include <bonefish/router/wamp_session_limits.hpp>
 #include <bonefish/utility/wamp_uri.hpp>
 
 #include <boost/asio.hpp>
@@ -50,6 +51,13 @@ public:
     wamp_dealer(boost::asio::io_service& io_service);
     ~wamp_dealer();
 
+    /// Rejects REGISTER requests from sessions already holding |max_registrations|
+    /// registrations and CALL requests from sessions already waiting for
+    /// |max_pending_calls| results (0 = unlimited). Each rejection is reported to
+    /// |on_violation|.
+    void set_limits(std::size_t max_registrations, std::size_t max_pending_calls,
+            session_limit_violation_handler on_violation);
+
     void attach_session(const std::shared_ptr<wamp_session>& session);
     void detach_session(const wamp_session_id& id);
 
@@ -73,6 +81,8 @@ private:
             const boost::system::error_code& error);
 
     void register_builtin_procedures();
+
+    void report_limit_violation(const wamp_session_id& session_id) const;
 
     void wamp_session_add_testament(const wamp_session_id& session_id, wamp_call_message* call_message);
     void wamp_session_flush_testaments(const wamp_session_id& session_id, wamp_call_message* call_message);
@@ -122,6 +132,10 @@ private:
     /// callee. This allows for the invocations to be cleaned up properly when the
     /// callee disconnects before it is able to send a yield response.
     std::unordered_map<wamp_session_id, std::unordered_set<wamp_request_id>> m_pending_callee_invocations;
+
+    std::size_t m_max_registrations = 0;
+    std::size_t m_max_pending_calls = 0;
+    session_limit_violation_handler m_on_limit_violation;
 };
 
 } // namespace bonefish

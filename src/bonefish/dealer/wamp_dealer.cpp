@@ -60,6 +60,14 @@ wamp_dealer::~wamp_dealer()
 {
 }
 
+void wamp_dealer::set_limits(std::size_t max_registrations, std::size_t max_pending_calls,
+        session_limit_violation_handler on_violation)
+{
+    m_max_registrations = max_registrations;
+    m_max_pending_calls = max_pending_calls;
+    m_on_limit_violation = std::move(on_violation);
+}
+
 void wamp_dealer::attach_session(const std::shared_ptr<wamp_session>& session)
 {
     assert(session->get_role(wamp_role_type::CALLER) ||
@@ -131,6 +139,7 @@ void wamp_dealer::detach_session(const wamp_session_id& session_id)
                 m_pending_invocations.erase(pending_invocations_itr);
             }
         }
+        m_pending_caller_invocations.erase(pending_caller_invocations_itr);
     }
 
     // Cleanup any pending callee invocations associated with the session.
@@ -150,6 +159,10 @@ void wamp_dealer::detach_session(const wamp_session_id& session_id)
                 send_error(session->get_transport(), wamp_message_type::CALL,
                         dealer_invocation->get_request_id(), "wamp.error.callee_session_closed");
 
+                auto caller_invocations_itr = m_pending_caller_invocations.find(session->get_session_id());
+                if (caller_invocations_itr != m_pending_caller_invocations.end()) {
+                    caller_invocations_itr->second.erase(request_id);
+                }
                 m_pending_invocations.erase(pending_invocations_itr);
             }
         }
@@ -194,6 +207,17 @@ void wamp_dealer::process_call_message(const wamp_session_id& session_id,
         send_error(session_itr->second->get_transport(), call_message->get_type(),
                 call_message->get_request_id(), "wamp.error.no_such_procedure");
         return;
+    }
+
+    if (m_max_pending_calls != 0) {
+        auto pending_caller_invocations_itr = m_pending_caller_invocations.find(session_id);
+        if (pending_caller_invocations_itr != m_pending_caller_invocations.end() &&
+                pending_caller_invocations_itr->second.size() >= m_max_pending_calls) {
+            send_error(session_itr->second->get_transport(), call_message->get_type(),
+                    call_message->get_request_id(), session_limit_error::too_many_pending_calls);
+            report_limit_violation(session_id);
+            return;
+        }
     }
 
     std::shared_ptr<wamp_session> session =
@@ -332,6 +356,17 @@ void wamp_dealer::process_register_message(const wamp_session_id& session_id,
         send_error(session_itr->second->get_transport(), register_message->get_type(),
                 register_message->get_request_id(), "wamp.error.procedure_already_exists");
         return;
+    }
+
+    if (m_max_registrations != 0) {
+        auto session_registrations_itr = m_session_registrations.find(session_id);
+        if (session_registrations_itr != m_session_registrations.end() &&
+                session_registrations_itr->second.size() >= m_max_registrations) {
+            send_error(session_itr->second->get_transport(), register_message->get_type(),
+                    register_message->get_request_id(), session_limit_error::too_many_registrations);
+            report_limit_violation(session_id);
+            return;
+        }
     }
 
     const wamp_registration_id registration_id = m_registration_id_generator.generate();
@@ -505,6 +540,13 @@ void wamp_dealer::send_error(const std::unique_ptr<wamp_transport>& transport,
     BONEFISH_ERROR("%1%", *error_message);
     if (!transport->send_message(std::move(*error_message))) {
         BONEFISH_ERROR("failed to send error message");
+    }
+}
+
+void wamp_dealer::report_limit_violation(const wamp_session_id& session_id) const
+{
+    if (m_on_limit_violation) {
+        m_on_limit_violation(session_id);
     }
 }
 

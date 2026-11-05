@@ -21,8 +21,10 @@
 #include <bonefish/broker/wamp_broker.hpp>
 #include <bonefish/dealer/wamp_dealer.hpp>
 #include <bonefish/messages/wamp_welcome_details.hpp>
+#include <bonefish/router/wamp_session_limits.hpp>
 
 #include <boost/asio.hpp>
+#include <chrono>
 #include <memory>
 #include <unordered_map>
 
@@ -55,7 +57,8 @@ public:
     wamp_router_impl(
         boost::asio::io_service& io_service,
         const std::string& realm,
-        std::shared_ptr<wamp_authenticator> authenticator = nullptr);
+        std::shared_ptr<wamp_authenticator> authenticator = nullptr,
+        const wamp_session_limits& limits = {});
     ~wamp_router_impl();
 
     const std::string& get_realm() const;
@@ -94,6 +97,14 @@ public:
 #endif
 
 private:
+    struct violation_window {
+        std::chrono::steady_clock::time_point start;
+        std::size_t count = 0;
+    };
+
+    void on_limit_violation(const wamp_session_id& session_id);
+
+private:
     std::string m_realm;
     wamp_broker m_broker;
     wamp_dealer m_dealer;
@@ -104,6 +115,9 @@ private:
 
     // wamp_authentication_info is kept in a separate map because not all sessions may have it
     std::unordered_map<wamp_session_id, wamp_authentication_info> m_session_auth_info;
+
+    wamp_session_limits m_limits;
+    std::unordered_map<wamp_session_id, violation_window> m_session_violations;
 
 #ifdef BONEFISH_USE_SESSION_AUTHENTICATOR
     std::shared_ptr<session_authenticator> m_session_authenticator;

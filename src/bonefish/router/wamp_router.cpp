@@ -47,6 +47,14 @@ wamp_router::wamp_router(
 {
 }
 
+wamp_router::wamp_router(
+        boost::asio::io_service& io_service,
+        const std::string& realm,
+        const wamp_session_limits& limits)
+    : m_impl(new wamp_router_impl(io_service, realm, nullptr, limits))
+{
+}
+
 wamp_router::~wamp_router()
 {
 }

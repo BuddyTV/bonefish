@@ -24,6 +24,7 @@
 #include <bonefish/identifiers/wamp_subscription_id.hpp>
 #include <bonefish/identifiers/wamp_subscription_id_generator.hpp>
 #include <bonefish/messages/wamp_message_type.hpp>
+#include <bonefish/router/wamp_session_limits.hpp>
 
 #include <memory>
 #include <unordered_map>
@@ -44,6 +45,10 @@ class wamp_broker
 public:
     wamp_broker(const std::string& realm);
     ~wamp_broker();
+
+    /// Rejects SUBSCRIBE requests from sessions already holding |max_subscriptions|
+    /// subscriptions (0 = unlimited) and reports each rejection to |on_violation|.
+    void set_limits(std::size_t max_subscriptions, session_limit_violation_handler on_violation);
 
     void attach_session(const std::shared_ptr<wamp_session>& session);
     void detach_session(const wamp_session_id& id);
@@ -68,6 +73,8 @@ private:
     std::unordered_map<wamp_session_id, std::unordered_set<wamp_subscription_id>> m_session_subscriptions;
     std::unordered_map<std::string, std::unique_ptr<wamp_broker_subscriptions>> m_topic_subscriptions;
     std::unordered_map<wamp_subscription_id, std::unique_ptr<wamp_broker_topic>> m_subscription_topics;
+    std::size_t m_max_subscriptions = 0;
+    session_limit_violation_handler m_on_limit_violation;
 };
 
 } // namespace bonefish
